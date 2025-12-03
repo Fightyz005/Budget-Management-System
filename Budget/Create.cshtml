@@ -1,0 +1,165 @@
+@model BudgetItem
+@{
+    ViewData["Title"] = "เพิ่มรายการงบประมาณ";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    เพิ่มรายการงบประมาณใหม่
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label asp-for="Category" class="form-label">
+                            <i class="fas fa-tag me-1"></i>หมวดหมู่ <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Category" class="form-select">
+                            <option value="">-- เลือกหมวดหมู่ --</option>
+                            <option value="IT & Automation">IT & Automation</option>
+                            <option value="Machinery & Equipment">Machinery & Equipment</option>
+                            <option value="Warehouse & Building">Warehouse & Building</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <span asp-validation-for="Category" class="text-danger"></span>
+                    </div>
+
+                    <!-- Item Name -->
+                    <div class="mb-3">
+                        <label asp-for="Item" class="form-label">
+                            <i class="fas fa-file-alt me-1"></i>ชื่อรายการ <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Item" class="form-control" placeholder="เช่น: เครื่องคอมพิวเตอร์ใหม่">
+                        <span asp-validation-for="Item" class="text-danger"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>รายละเอียด
+                        </label>
+                        <textarea asp-for="Description" class="form-control" rows="3" 
+                                  placeholder="รายละเอียดเพิ่มเติม..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <!-- Department and Division -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Department" class="form-label">
+                                <i class="fas fa-building me-1"></i>สายงาน
+                            </label>
+                            <input asp-for="Department" class="form-control" 
+                                   placeholder="เช่น: สายงานบริหารบัญชีการเงินและการลงทุน">
+                            <span asp-validation-for="Department" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Division" class="form-label">
+                                <i class="fas fa-sitemap me-1"></i>ฝ่าย
+                            </label>
+                            <input asp-for="Division" class="form-control" 
+                                   placeholder="เช่น: ฝ่าย IT - DEV">
+                            <span asp-validation-for="Division" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Amount" class="form-label">
+                                <i class="fas fa-money-bill-wave me-1"></i>งบประมาณที่เสนอ (บาท) <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Amount" type="number" class="form-control" 
+                                   placeholder="0.00" step="0.01" min="0">
+                            <span asp-validation-for="Amount" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ApprovedAmount" class="form-label">
+                                <i class="fas fa-check-circle me-1"></i>งบที่อนุมัติ (บาท)
+                            </label>
+                            <input asp-for="ApprovedAmount" type="number" class="form-control" 
+                                   placeholder="0.00" step="0.01" min="0" value="0">
+                            <span asp-validation-for="ApprovedAmount" class="text-danger"></span>
+                            <small class="text-muted">ปล่อยว่างไว้ถ้ายังไม่อนุมัติ</small>
+                        </div>
+                    </div>
+
+                    <!-- Benefits -->
+                    <div class="mb-3">
+                        <label asp-for="Benefits" class="form-label">
+                            <i class="fas fa-thumbs-up me-1"></i>ประโยชน์ที่ได้รับ
+                        </label>
+                        <textarea asp-for="Benefits" class="form-control" rows="2" 
+                                  placeholder="ระบุประโยชน์ที่องค์กรจะได้รับ..."></textarea>
+                        <span asp-validation-for="Benefits" class="text-danger"></span>
+                    </div>
+
+                    <!-- Worthiness -->
+                    <div class="mb-3">
+                        <label asp-for="Worthiness" class="form-label">
+                            <i class="fas fa-star me-1"></i>ความคุ้มค่า
+                        </label>
+                        <textarea asp-for="Worthiness" class="form-control" rows="2" 
+                                  placeholder="ระบุความคุ้มค่าของการลงทุน..."></textarea>
+                        <span asp-validation-for="Worthiness" class="text-danger"></span>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>หมายเหตุ
+                        </label>
+                        <textarea asp-for="Notes" class="form-control" rows="2" 
+                                  placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="mb-4">
+                        <label asp-for="Status" class="form-label">
+                            <i class="fas fa-flag me-1"></i>สถานะ
+                        </label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="proposed" selected>รอพิจารณา (Proposed)</option>
+                            <option value="approved">อนุมัติแล้ว (Approved)</option>
+                            <option value="rejected">ไม่อนุมัติ (Rejected)</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>ยกเลิก
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>บันทึกรายการ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Format number input
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = parseFloat(this.value).toFixed(2);
+                }
+            });
+        });
+    </script>
+}

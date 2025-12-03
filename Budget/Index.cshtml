@@ -1,0 +1,268 @@
+@model List<BudgetItem>
+@{
+    ViewData["Title"] = "รายการงบประมาณ";
+}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="mb-0">
+            <i class="fas fa-wallet text-primary"></i>
+            รายการงบประมาณทั้งหมด
+        </h2>
+        <p class="text-muted">จัดการรายการงบประมาณ</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>เพิ่มรายการใหม่
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหา...">
+            </div>
+            <div class="col-md-3">
+                <select id="categoryFilter" class="form-select">
+                    <option value="">ทุกหมวดหมู่</option>
+                    <option value="IT & Automation">IT & Automation</option>
+                    <option value="Machinery & Equipment">Machinery & Equipment</option>
+                    <option value="Warehouse & Building">Warehouse & Building</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="statusFilter" class="form-select">
+                    <option value="">ทุกสถานะ</option>
+                    <option value="proposed">รอพิจารณา</option>
+                    <option value="approved">อนุมัติ</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button onclick="resetFilters()" class="btn btn-secondary w-100">
+                    <i class="fas fa-redo me-2"></i>Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Table -->
+<div class="card">
+    <div class="card-body">
+        @if (Model.Count == 0)
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">ยังไม่มีรายการงบประมาณ</h5>
+                <p class="text-muted">เริ่มต้นด้วยการเพิ่มรายการใหม่</p>
+                <a asp-action="Create" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>เพิ่มรายการแรก
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="budgetTable">
+                    <thead>
+                        <tr>
+                            <th>รหัส</th>
+                            <th>รายการ</th>
+                            <th>หมวดหมู่</th>
+                            <th>สายงาน</th>
+                            <th class="text-end">งบที่เสนอ</th>
+                            <th class="text-end">งบอนุมัติ</th>
+                            <th class="text-center">สถานะ</th>
+                            <th class="text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr data-category="@item.Category" data-status="@item.Status">
+                                <td><strong>#@item.Id</strong></td>
+                                <td>
+                                    <strong>@item.Item</strong>
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        <br><small class="text-muted">@item.Description</small>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">@item.Category</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.Department))
+                                    {
+                                        <small>@item.Department</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">-</small>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <strong>฿@item.Amount.ToString("N0")</strong>
+                                </td>
+                                <td class="text-end">
+                                    @if (item.ApprovedAmount > 0)
+                                    {
+                                        <strong class="text-success">฿@item.ApprovedAmount.ToString("N0")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Status == "approved")
+                                    {
+                                        <span class="badge badge-approved">
+                                            <i class="fas fa-check me-1"></i>อนุมัติ
+                                        </span>
+                                    }
+                                    else if (item.Status == "rejected")
+                                    {
+                                        <span class="badge badge-rejected">
+                                            <i class="fas fa-times me-1"></i>ไม่อนุมัติ
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-proposed">
+                                            <i class="fas fa-clock me-1"></i>รอพิจารณา
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" 
+                                           class="btn btn-info" title="ดูรายละเอียด">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" 
+                                           class="btn btn-warning" title="แก้ไข">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-controller="Voting" asp-action="Create" asp-route-budgetItemId="@item.Id"
+                                           class="btn btn-success" title="สร้างการลงคะแนน">
+                                            <i class="fas fa-vote-yea"></i>
+                                        </a>
+                                        <button onclick="confirmDelete(@item.Id, '@item.Item')" 
+                                                class="btn btn-danger" title="ลบ">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted">
+                    แสดง <strong id="displayCount">@Model.Count</strong> จาก <strong>@Model.Count</strong> รายการ
+                </small>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>ยืนยันการลบ
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>คุณต้องการลบรายการ <strong id="deleteItemName"></strong> ใช่หรือไม่?</p>
+                <p class="text-danger mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    การดำเนินการนี้ไม่สามารถย้อนกลับได้
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>ลบรายการ
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Search and Filter
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const table = document.getElementById('budgetTable');
+    const tbody = table?.querySelector('tbody');
+
+    function filterTable() {
+        if (!tbody) return;
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const category = categoryFilter.value;
+        const status = statusFilter.value;
+        const rows = tbody.querySelectorAll('tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowCategory = row.dataset.category;
+            const rowStatus = row.dataset.status;
+
+            const matchesSearch = text.includes(searchTerm);
+            const matchesCategory = !category || rowCategory === category;
+            const matchesStatus = !status || rowStatus === status;
+
+            if (matchesSearch && matchesCategory && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        document.getElementById('displayCount').textContent = visibleCount;
+    }
+
+    searchInput?.addEventListener('input', filterTable);
+    categoryFilter?.addEventListener('change', filterTable);
+    statusFilter?.addEventListener('change', filterTable);
+
+    function resetFilters() {
+        searchInput.value = '';
+        categoryFilter.value = '';
+        statusFilter.value = '';
+        filterTable();
+    }
+
+    // Delete Confirmation
+    let deleteModal;
+    function confirmDelete(id, name) {
+        document.getElementById('deleteItemName').textContent = name;
+        document.getElementById('deleteForm').action = '/Budget/Delete/' + id;
+        
+        if (!deleteModal) {
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        }
+        deleteModal.show();
+    }
+</script>
+}

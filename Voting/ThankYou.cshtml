@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "ขอบคุณที่ลงคะแนน";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-success">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle fa-5x text-success"></i>
+                </div>
+                
+                <h1 class="display-4 text-success mb-3">ขอบคุณ!</h1>
+                
+                <p class="lead mb-4">
+                    คะแนนเสียงของคุณถูกบันทึกเรียบร้อยแล้ว
+                </p>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    คุณสามารถกลับมาแก้ไขคะแนนเสียงของคุณได้ จนกว่าการลงคะแนนจะถูกปิด
+                </div>
+
+                <div class="mt-4">
+                    <a href="javascript:window.close()" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-times me-2"></i>ปิดหน้าต่าง
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fa-check-circle {
+        animation: scaleIn 0.5s ease;
+    }
+</style>

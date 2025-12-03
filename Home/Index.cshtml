@@ -1,0 +1,441 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard งบประมาณ";
+}
+
+<div class="row mb-4 fade-in">
+    <div class="col-md-8">
+        <h2 class="mb-0">
+            <i class="fas fa-chart-line text-primary"></i>
+            Dashboard งบประมาณปี 2026
+        </h2>
+        <p class="text-muted">ภาพรวมงบประมาณและรายการทั้งหมด</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-controller="Budget" asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>เพิ่มรายการใหม่
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-4 mb-4">
+    <!-- Total Proposed -->
+    <div class="col-md-3">
+        <div class="card fade-in" style="animation-delay: 0.1s">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            งบที่เสนอทั้งหมด
+                        </h6>
+                        <h3 class="mb-0 text-primary">
+                            ฿@Model.Statistics.TotalProposed.ToString("N0")
+                        </h3>
+                        <small class="text-muted">@Model.Statistics.TotalItems รายการ</small>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-coins fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Approved -->
+    <div class="col-md-3">
+        <div class="card fade-in" style="animation-delay: 0.2s">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-check-circle"></i>
+                            งบที่อนุมัติแล้ว
+                        </h6>
+                        <h3 class="mb-0 text-success">
+                            ฿@Model.Statistics.TotalApproved.ToString("N0")
+                        </h3>
+                        <small class="text-muted">@Model.Statistics.ApprovedItems รายการ</small>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-check-double fa-2x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: @Model.Statistics.ApprovalPercentage%">
+                    </div>
+                </div>
+                <small class="text-muted">@Model.Statistics.ApprovalPercentage% ของงบที่เสนอ</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proposed Items -->
+    <div class="col-md-3">
+        <div class="card fade-in" style="animation-delay: 0.3s">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-clock"></i>
+                            รอการอนุมัติ
+                        </h6>
+                        <h3 class="mb-0 text-warning">
+                            @Model.Statistics.ProposedItems
+                        </h3>
+                        <small class="text-muted">รายการ</small>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-hourglass-half fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejected Items -->
+    <div class="col-md-3">
+        <div class="card fade-in" style="animation-delay: 0.4s">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-times-circle"></i>
+                            ไม่อนุมัติ
+                        </h6>
+                        <h3 class="mb-0 text-danger">
+                            @Model.Statistics.RejectedItems
+                        </h3>
+                        <small class="text-muted">รายการ</small>
+                    </div>
+                    <div class="text-danger">
+                        <i class="fas fa-ban fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Budget List -->
+<div class="row g-4 mb-4">
+    <!-- Charts -->
+    <div class="col-lg-6">
+        <div class="card fade-in" style="animation-delay: 0.5s">
+            <div class="card-header">
+                <i class="fas fa-building me-2"></i>
+                งบประมาณตามสายงาน
+            </div>
+            <div class="card-body">
+                <canvas id="departmentChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card fade-in" style="animation-delay: 0.6s">
+            <div class="card-header">
+                <i class="fas fa-tags me-2"></i>
+                งบประมาณตามหมวดหมู่
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Items List -->
+<div class="card fade-in" style="animation-delay: 0.7s">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-wallet me-2"></i>
+            รายการงบประมาณทั้งหมด
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (Model.BudgetItems.Count == 0)
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">ยังไม่มีรายการงบประมาณ</h5>
+                <p class="text-muted">เริ่มต้นด้วยการเพิ่มรายการใหม่</p>
+                <a asp-controller="Budget" asp-action="Create" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>เพิ่มรายการแรก
+                </a>
+            </div>
+        }
+        else
+        {
+            <!-- Search and Filter -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหา...">
+                </div>
+                <div class="col-md-3">
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">ทุกหมวดหมู่</option>
+                        <option value="IT & Automation">IT & Automation</option>
+                        <option value="Machinery & Equipment">Machinery & Equipment</option>
+                        <option value="Warehouse & Building">Warehouse & Building</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="statusFilter" class="form-select">
+                        <option value="">ทุกสถานะ</option>
+                        <option value="proposed">รอพิจารณา</option>
+                        <option value="approved">อนุมัติ</option>
+                        <option value="rejected">ไม่อนุมัติ</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button onclick="resetFilters()" class="btn btn-secondary w-100">
+                        <i class="fas fa-redo me-2"></i>Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="budgetTable">
+                    <thead>
+                        <tr>
+                            <th>รหัส</th>
+                            <th>รายการ</th>
+                            <th>หมวดหมู่</th>
+                            <th>สายงาน</th>
+                            <th class="text-end">งบที่เสนอ</th>
+                            <th class="text-end">งบอนุมัติ</th>
+                            <th class="text-center">สถานะ</th>
+                            <th class="text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.BudgetItems)
+                        {
+                            <tr data-category="@item.Category" data-status="@item.Status">
+                                <td><strong>#@item.Id</strong></td>
+                                <td>
+                                    <strong>@item.Item</strong>
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        <br><small class="text-muted">@item.Description</small>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">@item.Category</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.Department))
+                                    {
+                                        <small>@item.Department</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">-</small>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <strong>฿@item.Amount.ToString("N0")</strong>
+                                </td>
+                                <td class="text-end">
+                                    @if (item.ApprovedAmount > 0)
+                                    {
+                                        <strong class="text-success">฿@item.ApprovedAmount.ToString("N0")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Status == "approved")
+                                    {
+                                        <span class="badge badge-approved">
+                                            <i class="fas fa-check me-1"></i>อนุมัติ
+                                        </span>
+                                    }
+                                    else if (item.Status == "rejected")
+                                    {
+                                        <span class="badge badge-rejected">
+                                            <i class="fas fa-times me-1"></i>ไม่อนุมัติ
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-proposed">
+                                            <i class="fas fa-clock me-1"></i>รอพิจารณา
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-controller="Budget" asp-action="Details" asp-route-id="@item.Id" 
+                                           class="btn btn-info" title="ดูรายละเอียด">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a asp-controller="Budget" asp-action="Edit" asp-route-id="@item.Id" 
+                                           class="btn btn-warning" title="แก้ไข">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-controller="Voting" asp-action="Create" asp-route-budgetItemId="@item.Id"
+                                           class="btn btn-success" title="สร้างการลงคะแนน">
+                                            <i class="fas fa-vote-yea"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted">
+                    แสดง <strong id="displayCount">@Model.BudgetItems.Count</strong> จาก <strong>@Model.BudgetItems.Count</strong> รายการ
+                </small>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Department Chart
+    const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+    const departmentData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.DepartmentBudgets.Select(d => new { 
+            label = d.Department, 
+            value = d.TotalAmount 
+        })
+    ));
+
+    new Chart(departmentCtx, {
+        type: 'bar',
+        data: {
+            labels: departmentData.map(d => d.label),
+            datasets: [{
+                label: 'งบประมาณ (บาท)',
+                data: departmentData.map(d => d.value),
+                backgroundColor: [
+                    'rgba(255, 107, 53, 0.8)',
+                    'rgba(78, 205, 196, 0.8)',
+                    'rgba(149, 225, 211, 0.8)',
+                    'rgba(255, 217, 61, 0.8)',
+                    'rgba(243, 129, 129, 0.8)'
+                ],
+                borderWidth: 0,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '฿' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Category Chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    const categoryData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.CategoryBudgets.Select(c => new { 
+            label = c.Category, 
+            value = c.TotalAmount 
+        })
+    ));
+
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryData.map(c => c.label),
+            datasets: [{
+                data: categoryData.map(c => c.value),
+                backgroundColor: [
+                    'rgba(255, 107, 53, 0.8)',
+                    'rgba(78, 205, 196, 0.8)',
+                    'rgba(149, 225, 211, 0.8)',
+                    'rgba(255, 217, 61, 0.8)'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ฿' + context.parsed.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Search and Filter
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const table = document.getElementById('budgetTable');
+    const tbody = table?.querySelector('tbody');
+
+    function filterTable() {
+        if (!tbody) return;
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const category = categoryFilter.value;
+        const status = statusFilter.value;
+        const rows = tbody.querySelectorAll('tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowCategory = row.dataset.category;
+            const rowStatus = row.dataset.status;
+
+            const matchesSearch = text.includes(searchTerm);
+            const matchesCategory = !category || rowCategory === category;
+            const matchesStatus = !status || rowStatus === status;
+
+            if (matchesSearch && matchesCategory && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        document.getElementById('displayCount').textContent = visibleCount;
+    }
+
+    searchInput?.addEventListener('input', filterTable);
+    categoryFilter?.addEventListener('change', filterTable);
+    statusFilter?.addEventListener('change', filterTable);
+
+    function resetFilters() {
+        searchInput.value = '';
+        categoryFilter.value = '';
+        statusFilter.value = '';
+        filterTable();
+    }
+</script>
+}
