@@ -74,7 +74,6 @@ namespace BudgetManagementSystem.Web.Models
         [StringLength(100)]
         public string VoterName { get; set; } = string.Empty;
 
-        [StringLength(200)]
         [EmailAddress]
         public string? VoterEmail { get; set; }
 

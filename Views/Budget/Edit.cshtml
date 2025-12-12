@@ -1,0 +1,546 @@
+@model BudgetManagementSystem.Web.Models.BudgetItem
+@{
+    ViewData["Title"] = "แก้ไขรายการงบประมาณ";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>
+                    แก้ไขรายการงบประมาณ #@Model.Id
+                </h4>
+            </div>
+            <div class="card-body">
+                <form action="/Budget/EditPost/@Model.Id" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@Model.Id" />
+
+                    @if (ViewData.ModelState.IsValid == false)
+                    {
+                        <div class="alert alert-danger">
+                            <h5>เกิดข้อผิดพลาด:</h5>
+                            <ul>
+                                @foreach (var key in ViewData.ModelState.Keys)
+                                {
+                                    var state = ViewData.ModelState[key];
+                                    if (state != null && state.Errors.Count > 0)
+                                    {
+                                        foreach (var error in state.Errors)
+                                        {
+                                            <li><strong>@key:</strong> @error.ErrorMessage</li>
+                                        }
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <!-- Department and Division -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-building me-1"></i>สายงาน  <span class="text-danger">*</span>
+                            </label>
+                            <select id="departmentSelect" class="form-select">
+                                <option value="">-- กำลังโหลด... --</option>
+                            </select>
+                            <input type="hidden" name="Department" id="departmentName" value="@Model.Department" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-sitemap me-1"></i>ฝ่าย  <span class="text-danger">*</span>
+                            </label>
+                            <select id="divisionSelect" class="form-select" disabled>
+                                <option value="">-- กำลังโหลด... --</option>
+                            </select>
+                            <input type="hidden" name="Division" id="divisionName" value="@Model.Division" />
+                        </div>
+                    </div>
+
+                    <!-- Category - PRE-SELECTED SERVER-SIDE -->
+                    <div class="mb-3">
+                        <label for="Category" class="form-label">
+                            <i class="fas fa-tag me-1"></i>หมวดหมู่ <span class="text-danger">*</span>
+                        </label>
+                        <select name="Category" id="Category" class="form-select" required>
+                            <option value="">-- เลือกหมวดหมู่ --</option>
+                            <option value="IT & Automation" selected="@(Model.Category == "IT & Automation" ? "selected" : null)">IT & Automation</option>
+                            <option value="Machinery & Equipment" selected="@(Model.Category == "Machinery & Equipment" ? "selected" : null)">Machinery & Equipment</option>
+                            <option value="Warehouse & Building" selected="@(Model.Category == "Warehouse & Building" ? "selected" : null)">Warehouse & Building</option>
+                            <option value="Other" selected="@(Model.Category == "Other" ? "selected" : null)">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Project Type and Urgent -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="ProjectType" class="form-label">
+                                <i class="fas fa-project-diagram me-1"></i>ประเภทโครงการ  <span class="text-danger">*</span>
+                            </label>
+
+                            <select name="ProjectType" id="ProjectType" class="form-select">
+                                <option value="">-- เลือกประเภท --</option>
+                                <option value="Replacement" selected="@(Model.ProjectType == "Replacement" ? "selected" : null)">Replacement</option>
+                                <option value="Upgrade" selected="@(Model.ProjectType == "Upgrade" ? "selected" : null)">Upgrade</option>
+                                <option value="Compliance" selected="@(Model.ProjectType == "Compliance" ? "selected" : null)">Compliance</option>
+                                <option value="Expansion" selected="@(Model.ProjectType == "Expansion" ? "selected" : null)">Expansion</option>
+                                <option value="Replacement/Upgrade" selected="@(Model.ProjectType == "Replacement/Upgrade" ? "selected" : null)">Replacement/Upgrade</option>
+                                <option value="Quality Improvement" selected="@(Model.ProjectType == "Quality Improvement" ? "selected" : null)">Quality Improvement</option>
+                                <option value="Strategic" selected="@(Model.ProjectType == "Strategic" ? "selected" : null)">Strategic</option>
+                                <option value="Productivity" selected="@(Model.ProjectType == "Productivity" ? "selected" : null)">Productivity</option>
+                                <option value="Cost Saving" selected="@(Model.ProjectType == "Cost Saving" ? "selected" : null)">Cost Saving</option>
+                                <option value="Safety" selected="@(Model.ProjectType == "Safety" ? "selected" : null)">Safety</option>
+                            </select>
+
+                            <span asp-validation-for="ProjectType" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Urgent" class="form-label">
+                                <i class="fas fa-exclamation-circle me-1"></i>ความเร่งด่วน  <span class="text-danger">*</span>
+                            </label>
+
+                            <select asp-for="Urgent" class="form-select">
+                                <option value="">-- เลือกระดับ --</option>
+                                <option value="1.ด่วนมาก" selected="@(Model.Urgent == "1.ด่วนมาก" ? "selected" : null)">1.ด่วนมาก</option>
+                                <option value="2.ด่วน" selected="@(Model.Urgent == "2.ด่วน" ? "selected" : null)">2.ด่วน</option>
+                                <option value="3.ปกติ" selected="@(Model.Urgent == "3.ปกติ" ? "selected" : null)">3.ปกติ</option>
+                            </select>
+                            <span asp-validation-for="Urgent" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Start Date -->
+
+                    <div class="mb-3">
+
+                        <label asp-for="StartDate" class="form-label">
+                            <i class="fas fa-calendar me-1"></i>วันที่เริ่มโครงการ
+                        </label>
+                        <input asp-for="StartDate" type="date" class="form-control">
+
+                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                    </div>
+
+                    <!-- Item Name -->
+                    <div class="mb-3">
+                        <label for="Item" class="form-label">
+                            <i class="fas fa-file-alt me-1"></i>ชื่อรายการ <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="Item" id="Item" class="form-control"
+                               value="@Model.Item" required>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label for="Description" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>รายละเอียด
+                        </label>
+                        <textarea name="Description" id="Description" class="form-control" rows="3">@Model.Description</textarea>
+                    </div>
+
+                    
+
+                    <!-- Amount -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="Amount" class="form-label">
+                                <i class="fas fa-money-bill-wave me-1"></i>งบประมาณที่เสนอ (บาท) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="Amount" id="Amount" class="form-control"
+                                   value="@Model.Amount" step="1.00" min="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="ApprovedAmount" class="form-label">
+                                <i class="fas fa-check-circle me-1"></i>งบที่อนุมัติ (บาท)
+                            </label>
+                            <input type="number" name="ApprovedAmount" id="ApprovedAmount" class="form-control"
+                                   value="@Model.ApprovedAmount" step="0.01" min="0" disabled>
+                        </div>
+                    </div>
+
+                    <!-- Benefits -->
+                    <div class="mb-3">
+                        <label for="Benefits" class="form-label">
+                            <i class="fas fa-thumbs-up me-1"></i>ประโยชน์ที่ได้รับ
+                        </label>
+                        <textarea name="Benefits" id="Benefits" class="form-control" rows="2">@Model.Benefits</textarea>
+                    </div>
+
+                    <!-- Worthiness -->
+                    <div class="mb-3">
+                        <label for="Worthiness" class="form-label">
+                            <i class="fas fa-star me-1"></i>ความคุ้มค่า
+                        </label>
+                        <textarea name="Worthiness" id="Worthiness" class="form-control" rows="2">@Model.Worthiness</textarea>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-3">
+                        <label for="Notes" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>หมายเหตุ
+                        </label>
+                        <textarea name="Notes" id="Notes" class="form-control" rows="2">@Model.Notes</textarea>
+                    </div>
+
+                    <!-- Status - PRE-SELECTED SERVER-SIDE -->
+                    <div class="mb-4">
+                        <label for="Status" class="form-label">
+                            <i class="fas fa-flag me-1"></i>สถานะ
+                        </label>
+                        <select name="Status" id="Status" class="form-select" disabled>
+                            <option value="proposed" selected="@(Model.Status == "proposed" ? "selected" : null)">รอพิจารณา (Proposed)</option>
+                            <option value="approved" selected="@(Model.Status == "approved" ? "selected" : null)">อนุมัติแล้ว (Approved)</option>
+                            <option value="rejected" selected="@(Model.Status == "rejected" ? "selected" : null)">ไม่อนุมัติ (Rejected)</option>
+                        </select>
+                    </div>
+
+
+                    <!-- ✅ NEW: File Upload Section -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-paperclip me-1"></i>ไฟล์แนบ
+                        </label>
+
+                        @if (Model.HasFile)
+                        {
+                            <!-- แสดงไฟล์ปัจจุบัน -->
+                            <div class="alert alert-info">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        @{
+                                            var fileIcon = Model.FileExtension?.ToLower() switch
+                                            {
+                                                ".pdf" => "fas fa-file-pdf text-danger",
+                                                ".pptx" => "fas fa-file-powerpoint text-warning",
+                                                ".xlsx" => "fas fa-file-excel text-success",
+                                                ".csv" => "fas fa-file-csv text-info",
+                                                _ => "fas fa-file"
+                                            };
+                                        }
+                                        <i class="@fileIcon fa-2x me-3"></i>
+                                        <strong>@Model.FileName</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            ขนาด: @Model.FileSizeFormatted |
+                                            อัปโหลดเมื่อ: @Model.FileUploadDate?.ToString("dd/MM/yyyy HH:mm")
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <a href="@Url.Action("DownloadFile", "Budget", new { id = Model.Id })"
+                                           class="btn btn-sm btn-primary me-2">
+                                            <i class="fas fa-download"></i> ดาวน์โหลด
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                onclick="deleteFile(@Model.Id)">
+                                            <i class="fas fa-trash"></i> ลบไฟล์
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- อัปโหลดไฟล์ใหม่ -->
+                        <input asp-for="UploadedFile" type="file" class="form-control"
+                               accept=".pdf,.pptx,.xlsx,.csv"
+                               onchange="showFileInfo(this)">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            @if (Model.HasFile)
+                            {
+                                <span>อัปโหลดไฟล์ใหม่เพื่อแทนที่ไฟล์เดิม</span>
+                            }
+                            else
+                            {
+                                <span>รองรับไฟล์: PDF, PowerPoint, Excel, CSV (ขนาดไม่เกิน 10 MB)</span>
+                            }
+                        </small>
+                        <div id="fileInfo" class="mt-2"></div>
+                    </div>
+
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="/Budget/Index" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>ยกเลิก
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-save me-2"></i>บันทึกการแก้ไข
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function showFileInfo(input) {
+            const fileInfo = document.getElementById('fileInfo');
+
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileName = file.name;
+                const fileSize = (file.size / 1024).toFixed(2);
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+
+                const allowedExtensions = ['pdf', 'pptx', 'xlsx', 'csv'];
+                if (!allowedExtensions.includes(fileExtension)) {
+                    fileInfo.innerHTML = `
+                        <div class="alert alert-danger alert-sm">
+                            <i class="fas fa-times-circle me-2"></i>
+                            ไฟล์ไม่ถูกต้อง! รองรับเฉพาะ: .pdf, .pptx, .xlsx, .csv
+                        </div>
+                    `;
+                    input.value = '';
+                    return;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    fileInfo.innerHTML = `
+                        <div class="alert alert-danger alert-sm">
+                            <i class="fas fa-times-circle me-2"></i>
+                            ไฟล์ใหญ่เกินไป! ขนาดสูงสุด 10 MB
+                        </div>
+                    `;
+                    input.value = '';
+                    return;
+                }
+
+                const icon = getFileIcon(fileExtension);
+                fileInfo.innerHTML = `
+                    <div class="alert alert-success alert-sm">
+                        <i class="${icon} me-2"></i>
+                        <strong>${fileName}</strong> (${fileSize} KB)
+                    </div>
+                `;
+            } else {
+                fileInfo.innerHTML = '';
+            }
+        }
+
+        function getFileIcon(extension) {
+            switch(extension) {
+                case 'pdf': return 'fas fa-file-pdf text-danger';
+                case 'pptx': return 'fas fa-file-powerpoint text-warning';
+                case 'xlsx': return 'fas fa-file-excel text-success';
+                case 'csv': return 'fas fa-file-csv text-info';
+                default: return 'fas fa-file';
+            }
+        }
+
+        // ✅ NEW: ลบไฟล์
+        async function deleteFile(id) {
+            if (!confirm('คุณต้องการลบไฟล์นี้ใช่หรือไม่?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Budget/DeleteFile/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+
+                if (response.ok) {
+                    alert('ลบไฟล์สำเร็จ');
+                    location.reload();
+                } else {
+                    alert('เกิดข้อผิดพลาดในการลบไฟล์');
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+            }
+        }
+        // ข้อมูลเดิมจาก Model (escape special characters)
+        const existingData = {
+            id: @Model.Id,
+            category: '@Html.Raw(Model.Category?.Replace("'", "\\'") ?? "")',
+            department: '@Html.Raw(Model.Department?.Replace("'", "\\'") ?? "")',
+            division: '@Html.Raw(Model.Division?.Replace("'", "\\'") ?? "")',
+            status: '@Html.Raw(Model.Status?.Replace("'", "\\'") ?? "")'
+        };
+
+        console.log('📊 Existing Data:', existingData);
+
+        $(document).ready(async function() {
+            console.log('✅ Edit page loaded - ID:', existingData.id);
+
+            // ขั้นตอนที่ 1: โหลด Departments
+            await loadDepartments();
+
+            // ขั้นตอนที่ 2: หา Department ที่ตรงกับข้อมูลเดิม
+            await selectExistingDepartment();
+
+            // Form submit handler
+            $('form').on('submit', function(e) {
+                console.log('🔵 FORM SUBMIT - EditPost ID:', existingData.id);
+
+                const formData = new FormData(this);
+                console.log('=== Form Data ===');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+
+                // Validation
+                const category = formData.get('Category');
+                const item = formData.get('Item');
+                const amount = formData.get('Amount');
+
+                if (!category) {
+                    alert('❌ กรุณาเลือกหมวดหมู่');
+                    e.preventDefault();
+                    return false;
+                }
+                if (!item) {
+                    alert('❌ กรุณาระบุชื่อรายการ');
+                    e.preventDefault();
+                    return false;
+                }
+                if (!amount || parseFloat(amount) <= 0) {
+                    alert('❌ กรุณาระบุจำนวนเงิน');
+                    e.preventDefault();
+                    return false;
+                }
+
+                console.log('✅ Validation passed!');
+            });
+        });
+
+        // โหลดรายการสายงาน
+        async function loadDepartments() {
+            try {
+                console.log('🔄 Loading departments...');
+                const response = await fetch('/api/Department/departments');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const departments = await response.json();
+                console.log('✅ Departments loaded:', departments.length);
+
+                const select = $('#departmentSelect');
+                select.empty();
+                select.append('<option value="">-- เลือกสายงาน --</option>');
+
+                departments.forEach(dept => {
+                    select.append(`<option value="${dept.id}" data-name="${dept.name}">${dept.name}</option>`);
+                });
+
+                // Store departments in global variable
+                window.departmentsData = departments;
+
+            } catch (error) {
+                console.error('❌ Error loading departments:', error);
+                $('#departmentSelect').html('<option value="">-- ไม่สามารถโหลดข้อมูลได้ --</option>');
+            }
+        }
+
+        // เลือก Department ที่ตรงกับข้อมูลเดิม
+        async function selectExistingDepartment() {
+            if (!existingData.department) {
+                console.log('ℹ️ No existing department');
+                return;
+            }
+
+            console.log('🔍 Looking for department:', existingData.department);
+
+            // หา department ที่ตรงกัน
+            const dept = window.departmentsData?.find(d => d.name === existingData.department);
+
+            if (dept) {
+                console.log('🎯 Found department:', dept.name, 'ID:', dept.id);
+
+                // Select department
+                $('#departmentSelect').val(dept.id);
+                $('#departmentName').val(dept.name);
+
+                // Highlight ว่าเลือกแล้ว
+                $('#currentDept').css('color', 'green').text(dept.name + ' ✓');
+
+                // โหลด divisions
+                await loadDivisions(dept.id, true);
+            } else {
+                console.log('⚠️ Department not found:', existingData.department);
+                $('#currentDept').css('color', 'orange').text(existingData.department + ' (ไม่พบในระบบ)');
+            }
+        }
+
+        // โหลดรายการฝ่าย
+        async function loadDivisions(departmentId, selectExisting = false) {
+            try {
+                console.log('🔄 Loading divisions for dept:', departmentId);
+
+                const response = await fetch(`/api/Department/divisions/${departmentId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const divisions = await response.json();
+                console.log('✅ Divisions loaded:', divisions.length);
+
+                const select = $('#divisionSelect');
+                select.empty();
+                select.append('<option value="">-- เลือกฝ่าย --</option>');
+
+                divisions.forEach(div => {
+                    select.append(`<option value="${div.id}" data-name="${div.name}">${div.name}</option>`);
+                });
+
+                select.prop('disabled', false);
+
+                // ถ้าต้องการ select ค่าเดิม
+                if (selectExisting && existingData.division) {
+                    const div = divisions.find(d => d.name === existingData.division);
+                    if (div) {
+                        console.log('🎯 Found division:', div.name, 'ID:', div.id);
+                        select.val(div.id);
+                        $('#divisionName').val(div.name);
+                        $('#currentDiv').css('color', 'green').text(div.name + ' ✓');
+                    } else {
+                        console.log('⚠️ Division not found:', existingData.division);
+                        $('#currentDiv').css('color', 'orange').text(existingData.division + ' (ไม่พบในระบบ)');
+                    }
+                }
+
+            } catch (error) {
+                console.error('❌ Error loading divisions:', error);
+                $('#divisionSelect').html('<option value="">-- ไม่สามารถโหลดข้อมูลได้ --</option>');
+            }
+        }
+
+        // เมื่อเปลี่ยน Department
+        $('#departmentSelect').change(async function() {
+            const selectedOption = $(this).find('option:selected');
+            const departmentId = $(this).val();
+            const departmentName = selectedOption.data('name');
+
+            console.log('📍 Department changed:', departmentName);
+            $('#departmentName').val(departmentName || '');
+
+            if (departmentId) {
+                $('#divisionSelect').html('<option value="">-- กำลังโหลด... --</option>').prop('disabled', true);
+                $('#divisionName').val('');
+                await loadDivisions(departmentId, false);
+            } else {
+                $('#divisionSelect').html('<option value="">-- เลือกสายงานก่อน --</option>').prop('disabled', true);
+                $('#divisionName').val('');
+            }
+        });
+
+        // เมื่อเปลี่ยน Division
+        $('#divisionSelect').change(function() {
+            const selectedOption = $(this).find('option:selected');
+            const divisionName = selectedOption.data('name');
+
+            console.log('📍 Division changed:', divisionName);
+            $('#divisionName').val(divisionName || '');
+        });
+    </script>
+}

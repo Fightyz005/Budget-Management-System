@@ -1,0 +1,228 @@
+@model VotingSession
+@{
+    ViewData["Title"] = "ลงคะแนน";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        @if (Model.IsClosed)
+        {
+            <!-- Voting Closed -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-lock me-2"></i>
+                        การลงคะแนนปิดแล้ว
+                    </h4>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-times-circle fa-4x text-danger mb-3"></i>
+                    <h5>ขออภัย การลงคะแนนนี้ถูกปิดไปแล้ว</h5>
+                    <p class="text-muted">ไม่สามารถลงคะแนนเพิ่มเติมได้</p>
+
+                    <div class="mt-4">
+                        <a asp-action="Results" asp-route-voteId="@Model.VoteId" class="btn btn-primary">
+                            <i class="fas fa-chart-bar me-2"></i>ดูผลคะแนน
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Voting Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-vote-yea me-2"></i>
+                        ลงคะแนนเสียง
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Voting Info -->
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-info-circle me-2"></i>@Model.Title
+                        </h5>
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <p class="mb-2">@Model.Description</p>
+                        }
+                        <hr>
+                        <p class="mb-0">
+                            <strong>งบประมาณที่ขออนุมัติ:</strong>
+                            <span class="text-primary fs-5">฿@Model.Amount.ToString("N2")</span>
+                        </p>
+                    </div>
+
+                    <!-- Voting Form -->
+                    <form asp-action="SubmitVotePost" method="post" id="voteForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="VotingSessionId" value="@Model.Id" />
+
+                        <!-- Voter Name -->
+                        <div class="mb-3">
+                            <label for="VoterName" class="form-label">
+                                <i class="fas fa-user me-1"></i>ชื่อของคุณ <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="VoterName" id="VoterName"
+                                   class="form-control" placeholder="กรอกชื่อ-นามสกุล" required>
+                            <small class="text-muted">ชื่อของคุณต้องอยู่ในรายชื่อผู้มีสิทธิ์ลงคะแนน</small>
+                        </div>
+
+                        <!-- Voter Email (Optional) -->
+                        <div class="mb-3">
+                            <label for="VoterEmail" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>อีเมล (ถ้ามี)
+                            </label>
+                            <input type="email" name="VoterEmail" id="VoterEmail"
+                                   class="form-control" placeholder="your.email@example.com">
+                        </div>
+
+                        <!-- Vote Choice -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-check-square me-1"></i>คะแนนเสียงของคุณ <span class="text-danger">*</span>
+                            </label>
+
+                            <div class="vote-options">
+                                <!-- Approved -->
+                                <div class="form-check vote-option mb-3 p-3 border rounded" onclick="selectVote('approved')">
+                                    <input class="form-check-input" type="radio" name="VoteChoice"
+                                           id="approved" value="approved" required>
+                                    <label class="form-check-label w-100" for="approved">
+                                        <div class="d-flex align-items-center">
+                                            <div class="vote-icon bg-success text-white rounded-circle me-3">
+                                                <i class="fas fa-check fa-2x"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-0 text-success">อนุมัติเต็มจำนวน</h5>
+                                                <small class="text-muted">เห็นด้วยกับงบประมาณที่เสนอทั้งหมด</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Partial -->
+                                <div class="form-check vote-option mb-3 p-3 border rounded" onclick="selectVote('partial')">
+                                    <input class="form-check-input" type="radio" name="VoteChoice"
+                                           id="partial" value="partial" required>
+                                    <label class="form-check-label w-100" for="partial">
+                                        <div class="d-flex align-items-center">
+                                            <div class="vote-icon bg-warning text-white rounded-circle me-3">
+                                                <i class="fas fa-adjust fa-2x"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-0 text-warning">อนุมัติบางส่วน</h5>
+                                                <small class="text-muted">เห็นด้วย แต่เสนอปรับลดงบประมาณ</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Rejected -->
+                                <div class="form-check vote-option mb-3 p-3 border rounded" onclick="selectVote('rejected')">
+                                    <input class="form-check-input" type="radio" name="VoteChoice"
+                                           id="rejected" value="rejected" required>
+                                    <label class="form-check-label w-100" for="rejected">
+                                        <div class="d-flex align-items-center">
+                                            <div class="vote-icon bg-danger text-white rounded-circle me-3">
+                                                <i class="fas fa-times fa-2x"></i>
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-0 text-danger">ไม่อนุมัติ</h5>
+                                                <small class="text-muted">ไม่เห็นด้วยกับงบประมาณนี้</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Suggested Amount (for Partial) -->
+                        <div id="suggestedAmountSection" style="display: none;" class="mb-3">
+                            <label for="SuggestedAmount" class="form-label">
+                                <i class="fas fa-coins me-1"></i>งบประมาณที่เสนอ (บาท) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="SuggestedAmount" id="SuggestedAmount"
+                                   class="form-control" placeholder="0.00" step="0.01" min="0" max="@Model.Amount">
+                            <small class="text-muted">ระบุงบประมาณที่คุณคิดว่าเหมาะสม</small>
+                        </div>
+
+                        <!-- Comment -->
+                        <div class="mb-4">
+                            <label for="Comment" class="form-label">
+                                <i class="fas fa-comment me-1"></i>ความคิดเห็นเพิ่มเติม
+                            </label>
+                            <textarea name="Comment" id="Comment" class="form-control" rows="3"
+                                  placeholder="แสดงความคิดเห็นหรือเหตุผล (ไม่บังคับ)"></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i>ส่งคะแนนเสียง
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function selectVote(choice) {
+            document.getElementById(choice).checked = true;
+
+            // Show/hide suggested amount for partial
+            const suggestedAmountSection = document.getElementById('suggestedAmountSection');
+            const suggestedAmountInput = document.getElementById('SuggestedAmount');
+
+            if (choice === 'partial') {
+                suggestedAmountSection.style.display = 'block';
+                suggestedAmountInput.required = true;
+            } else {
+                suggestedAmountSection.style.display = 'none';
+                suggestedAmountInput.required = false;
+                suggestedAmountInput.value = '';
+            }
+
+            // Add active state
+            document.querySelectorAll('.vote-option').forEach(opt => {
+                opt.classList.remove('border-primary', 'bg-light');
+            });
+            document.getElementById(choice).closest('.vote-option').classList.add('border-primary', 'bg-light');
+        }
+
+        // Listen to radio change
+        document.querySelectorAll('input[name="VoteChoice"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                selectVote(this.value);
+            });
+        });
+    </script>
+
+    <style>
+        .vote-option {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .vote-option:hover {
+                background-color: #f8f9fa;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+        .vote-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+}

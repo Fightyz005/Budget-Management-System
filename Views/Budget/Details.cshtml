@@ -1,0 +1,218 @@
+@model BudgetItem
+@{
+    ViewData["Title"] = "รายละเอียดงบประมาณ";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    รายละเอียดงบประมาณ #@Model.Id
+                </h4>
+                <div>
+                    @if (Model.Status == "approved")
+                    {
+                        <span class="badge badge-approved">อนุมัติ</span>
+                    }
+                    else if (Model.Status == "rejected")
+                    {
+                        <span class="badge badge-rejected">ไม่อนุมัติ</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-proposed">รอพิจารณา</span>
+                    }
+                </div>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">หมวดหมู่:</dt>
+                    <dd class="col-sm-9"><span class="badge bg-info">@Model.Category</span></dd>
+
+                    <dt class="col-sm-3">ชื่อรายการ:</dt>
+                    <dd class="col-sm-9"><strong>@Model.Item</strong></dd>
+
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <dt class="col-sm-3">รายละเอียด:</dt>
+                        <dd class="col-sm-9">@Model.Description</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Department))
+                    {
+                        <dt class="col-sm-3">สายงาน:</dt>
+                        <dd class="col-sm-9">@Model.Department</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Division))
+                    {
+                        <dt class="col-sm-3">ฝ่าย:</dt>
+                        <dd class="col-sm-9">@Model.Division</dd>
+                    }
+
+                    <dt class="col-sm-3">งบที่เสนอ:</dt>
+                    <dd class="col-sm-9"><strong class="text-primary">฿@Model.Amount.ToString("N2")</strong></dd>
+
+                    <dt class="col-sm-3">งบที่อนุมัติ:</dt>
+                    <dd class="col-sm-9">
+                        @if (Model.ApprovedAmount > 0)
+                        {
+                            <strong class="text-success">฿@Model.ApprovedAmount.ToString("N2")</strong>
+                        }
+                        else
+                        {
+                            <span class="text-muted">ยังไม่อนุมัติ</span>
+                        }
+                    </dd>
+
+                    @if (!string.IsNullOrEmpty(Model.ProjectType))
+                    {
+                        <dt class="col-sm-3">ประเภทโครงการ:</dt>
+                        <dd class="col-sm-9">
+                            @{
+                                var projectTypeColor = Model.ProjectType switch
+                                {
+                                    "Replacement" => "bg-primary",
+                                    "Upgrade" => "bg-success",
+                                    "Compliance" => "bg-danger",
+                                    "Expansion" => "bg-warning text-dark",
+                                    "Replacement/Upgrade" => "bg-info",
+                                    "Quality Improvement" => "bg-secondary",
+                                    "Strategic" => "bg-dark",
+                                    "Productivity" => "bg-purple",
+                                    "Cost Saving" => "bg-orange",
+                                    "Safety" => "bg-red",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @projectTypeColor">@Model.ProjectType</span>
+                        </dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Urgent))
+                    {
+                        <dt class="col-sm-3">ความเร่งด่วน:</dt>
+                        <dd class="col-sm-9">
+                            @{
+                                var urgentColor = Model.Urgent switch
+                                {
+                                    "1.ด่วนมาก" => "bg-danger",
+                                    "2.ด่วน" => "bg-warning text-dark",
+                                    "3.ปกติ" => "bg-success",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @urgentColor">@Model.Urgent</span>
+                        </dd>
+                    }
+
+                    @if (Model.StartDate.HasValue)
+                    {
+                        <dt class="col-sm-3">วันที่เริ่มต้น:</dt>
+                        <dd class="col-sm-9">@Model.StartDate.Value.ToString("dd/MM/yyyy")</dd>
+                    }
+
+                    @* ✅ NEW: แสดงไฟล์แนบ *@
+                    @if (Model.HasFile)
+                    {
+                        <dt class="col-sm-3">ไฟล์แนบ:</dt>
+                        <dd class="col-sm-9">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            @{
+                                                var fileIcon = Model.FileExtension?.ToLower() switch
+                                                {
+                                                    ".pdf" => "fas fa-file-pdf text-danger",
+                                                    ".pptx" => "fas fa-file-powerpoint text-warning",
+                                                    ".xlsx" => "fas fa-file-excel text-success",
+                                                    ".csv" => "fas fa-file-csv text-info",
+                                                    _ => "fas fa-file"
+                                                };
+                                            }
+                                            <i class="@fileIcon fa-2x me-3"></i>
+                                            <strong>@Model.FileName</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                ขนาด: @Model.FileSizeFormatted |
+                                                อัปโหลดเมื่อ: @Model.FileUploadDate?.ToString("dd/MM/yyyy HH:mm")
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <a asp-action="DownloadFile" asp-route-id="@Model.Id"
+                                               class="btn btn-primary">
+                                                <i class="fas fa-download me-2"></i>ดาวน์โหลด
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Benefits))
+                    {
+                        <dt class="col-sm-3">ประโยชน์:</dt>
+                        <dd class="col-sm-9">@Model.Benefits</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Worthiness))
+                    {
+                        <dt class="col-sm-3">ความคุ้มค่า:</dt>
+                        <dd class="col-sm-9">@Model.Worthiness</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <dt class="col-sm-3">หมายเหตุ:</dt>
+                        <dd class="col-sm-9">@Model.Notes</dd>
+                    }
+
+                    <dt class="col-sm-3">วันที่สร้าง:</dt>
+                    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-3">แก้ไขล่าสุด:</dt>
+                    <dd class="col-sm-9">@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                </dl>
+
+                <hr>
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>กลับ
+                    </a>
+                    <a asp-controller="Voting" asp-action="Create" asp-route-budgetItemId="@Model.Id" class="btn btn-success">
+                        <i class="fas fa-vote-yea me-2"></i>สร้างการลงคะแนน
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>แก้ไข
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>ลบ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ✅ เพิ่ม CSS สำหรับสีเพิ่มเติม *@
+<style>
+    .bg-purple {
+        background-color: #6f42c1 !important;
+        color: white;
+    }
+
+    .bg-orange {
+        background-color: #fd7e14 !important;
+        color: white;
+    }
+
+    .bg-red {
+        background-color: #dc3545 !important;
+        color: white;
+    }
+</style>

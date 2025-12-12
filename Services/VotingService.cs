@@ -115,9 +115,9 @@ namespace BudgetManagementSystem.Web.Services
         /// <summary>
         /// ดึงผลการลงคะแนน
         /// </summary>
-        public async Task<VotingResultsViewModel> GetVotingResultsAsync(string voteId)
+        public async Task<VotingResultsViewModel> GetVotingResultsAsync(string id)
         {
-            var session = await _votingRepository.GetVotingSessionByVoteIdAsync(voteId);
+            var session = await _votingRepository.GetVotingSessionByVoteIdAsync(id);
             if (session == null)
             {
                 throw new ArgumentException("ไม่พบเซสชันการลงคะแนน");

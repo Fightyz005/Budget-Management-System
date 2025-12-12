@@ -17,6 +17,7 @@ namespace BudgetManagementSystem.Web.Services
         Task<int> CreateBudgetItemAsync(BudgetItem item);
         Task<int> UpdateBudgetItemAsync(BudgetItem item);
         Task<int> DeleteBudgetItemAsync(int id);
+        Task<int> DeleteFileAsync(int id); // ✅ NEW
         Task<BudgetStatisticsViewModel> GetStatisticsAsync();
         Task<List<BudgetByDepartmentViewModel>> GetBudgetByDepartmentAsync();
         Task<List<BudgetByCategoryViewModel>> GetBudgetByCategoryAsync();
@@ -68,7 +69,13 @@ namespace BudgetManagementSystem.Web.Services
         {
             return await _budgetRepository.DeleteAsync(id);
         }
-
+        // <summary>
+        /// ✅ NEW: ลบไฟล์ (เฉพาะข้อมูลในฐานข้อมูล)
+        /// </summary>
+        public async Task<int> DeleteFileAsync(int id)
+        {
+            return await _budgetRepository.DeleteFileAsync(id);
+        }
         /// <summary>
         /// ดึงสถิติงบประมาณ
         /// </summary>

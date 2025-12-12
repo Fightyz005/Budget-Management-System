@@ -1,0 +1,682 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard งบประมาณ";
+}
+
+<div class="row mb-4 fade-in">
+    <div class="col-md-8">
+        <h2 class="mb-0">
+            <i class="fas fa-chart-line text-primary"></i>
+            Dashboard งบประมาณปี 2026
+        </h2>
+        <p class="text-muted">ภาพรวมงบประมาณและรายการทั้งหมด</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-controller="Budget" asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>เพิ่มรายการใหม่
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-4 mb-4">
+    <!-- Total Proposed -->
+    <div class="col-md-3">
+        <div class="card fade-in" style="animation-delay: 0.1s">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            งบที่เสนอทั้งหมด
+                        </h6>
+                        <h3 class="mb-0 text-primary">
+                            ฿@Model.Statistics.TotalProposed.ToString("N0")
+                        </h3>
+                        <small class="text-muted">@Model.Statistics.TotalItems รายการ</small>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-coins fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Approved -->
+    <div class="col-md-3">
+        <div class="card fade-in" style="animation-delay: 0.2s">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-check-circle"></i>
+                            งบที่อนุมัติแล้ว
+                        </h6>
+                        <h3 class="mb-0 text-success">
+                            ฿@Model.Statistics.TotalApproved.ToString("N0")
+                        </h3>
+                        <small class="text-muted">@Model.Statistics.ApprovedItems รายการ</small>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-check-double fa-2x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: @Model.Statistics.ApprovalPercentage%">
+                    </div>
+                </div>
+                <small class="text-muted">@Model.Statistics.ApprovalPercentage% ของงบที่เสนอ</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proposed Items -->
+    <div class="col-md-3">
+        <div class="card fade-in" style="animation-delay: 0.3s">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-clock"></i>
+                            รอการอนุมัติ
+                        </h6>
+                        <h3 class="mb-0 text-warning">
+                            @Model.Statistics.ProposedItems
+                        </h3>
+                        <small class="text-muted">รายการ</small>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-hourglass-half fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejected Items -->
+    <div class="col-md-3">
+        <div class="card fade-in" style="animation-delay: 0.4s">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-times-circle"></i>
+                            ไม่อนุมัติ
+                        </h6>
+                        <h3 class="mb-0 text-danger">
+                            @Model.Statistics.RejectedItems
+                        </h3>
+                        <small class="text-muted">รายการ</small>
+                    </div>
+                    <div class="text-danger">
+                        <i class="fas fa-ban fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Budget List -->
+<div class="row g-4 mb-4">
+    <!-- Charts -->
+    <div class="col-lg-6">
+        <div class="card fade-in" style="animation-delay: 0.5s">
+            <div class="card-header">
+                <i class="fas fa-building me-2"></i>
+                งบประมาณตามสายงาน
+            </div>
+            <div class="card-body">
+                <canvas id="departmentChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card fade-in" style="animation-delay: 0.6s">
+            <div class="card-header">
+                <i class="fas fa-tags me-2"></i>
+                งบประมาณตามหมวดหมู่
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Items List -->
+<div class="card fade-in" style="animation-delay: 0.7s">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-wallet me-2"></i>
+            รายการงบประมาณทั้งหมด
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (Model.BudgetItems.Count == 0)
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">ยังไม่มีรายการงบประมาณ</h5>
+                <p class="text-muted">เริ่มต้นด้วยการเพิ่มรายการใหม่</p>
+                <a asp-controller="Budget" asp-action="Create" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>เพิ่มรายการแรก
+                </a>
+            </div>
+        }
+        else
+        {
+            <!-- Search and Filter -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-2">
+                    <input type="text" id="searchInput" class="form-control" placeholder="🔍 ค้นหา...">
+                </div>
+                <div class="col-md-2">
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">ทุกหมวดหมู่</option>
+                        <option value="IT & Automation">IT & Automation</option>
+                        <option value="Machinery & Equipment">Machinery & Equipment</option>
+                        <option value="Warehouse & Building">Warehouse & Building</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <select id="departmentFilter" class="form-select">
+                        <option value="">ทุกสายงาน</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="divisionFilter" class="form-select" disabled>
+                        <option value="">ทุกฝ่าย</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <select id="statusFilter" class="form-select">
+                        <option value="">ทุกสถานะ</option>
+                        <option value="proposed">รอพิจารณา</option>
+                        <option value="approved">อนุมัติ</option>
+                        <option value="rejected">ไม่อนุมัติ</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="projectTypeFilter" class="form-select">
+                        <option value="">-- เลือกประเภท --</option>
+                        <option value="Replacement">Replacement</option>
+                        <option value="Upgrade">Upgrade</option>
+                        <option value="Compliance">Compliance</option>
+                        <option value="Expansion">Expansion</option>
+                        <option value="Replacement/Upgrade">Replacement/Upgrade</option>
+                        <option value="Quality Improvement">Quality Improvement</option>
+                        <option value="Strategic">Strategic</option>
+                        <option value="Productivity">Productivity</option>
+                        <option value="Cost Saving">Cost Saving</option>
+                        <option value="Safety">Safety</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="urgentFilter" class="form-select">
+                        <option value="">-- เลือกระดับ --</option>
+                        <option value="1.ด่วนมาก">1.ด่วนมาก</option>
+                        <option value="2.ด่วน">2.ด่วน</option>
+                        <option value="3.ปกติ">3.ปกติ</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button onclick="resetFilters()" class="btn btn-secondary w-100 inline">
+                        <i class="fas fa-redo me-2"></i>Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="budgetTable">
+                    <thead>
+                        <tr>
+                            <th>Project type</th>    
+                            <th>หมวดหมู่</th>
+                            <th>วันที่เริ่ม</th>
+                            <th>สายงาน - ฝ่าย</th>
+                            <th>รายการ</th>            
+                            <th class="text-end">งบที่เสนอ</th>
+                            <th class="text-end">งบอนุมัติ</th>
+                            <th class="text-center">สถานะ</th>
+                            <th class="text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.BudgetItems)
+                        {
+                            <tr data-category="@item.Category" 
+                                data-status="@item.Status"
+                                data-department="@(item.Department ?? "")"
+                                data-division="@(item.Division ?? "")"
+                                data-projectType="@(item.ProjectType ?? "")"
+                                data-urgent="@(item.Urgent ?? "")">
+
+                                @* <td><strong>#@item.Id</strong></td> *@
+                                
+                                <td>
+
+                                    @if (!string.IsNullOrEmpty(item.ProjectType))
+                                    {
+                                        var badgeClass = item.ProjectType switch
+                                        {
+                                            "Replacement" => "bg-primary",           // น้ำเงิน
+                                            "Upgrade" => "bg-success",               // เขียว
+                                            "Compliance" => "bg-warning text-dark",  // เหลือง
+                                            "Expansion" => "bg-info text-dark",      // ฟ้า
+                                            "Replacement/Upgrade" => "bg-purple text-white",     // ม่วง
+                                            "Quality Improvement" => "bg-teal text-white",       // เขียวมิ้นต์
+                                            "Strategic" => "bg-indigo text-white",               // ม่วงเข้ม
+                                            "Productivity" => "bg-orange text-white",            // ส้ม
+                                            "Cost Saving" => "bg-green text-white",              // เขียวเข้ม
+                                            "Safety" => "bg-danger",                 // แดง
+                                            _ => "bg-secondary"                      // เทา (default)
+                                        };
+                                        <span class="badge @badgeClass">@item.ProjectType</span>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">-</small>
+                                    }
+                                </td>
+
+                                <td>
+                                    @{
+                                        var categoryBadgeClass = item.Category switch
+                                        {
+                                            "IT & Automation" => "bg-primary",              // น้ำเงิน
+                                            "Machinery & Equipment" => "bg-success",        // เขียว
+                                            "Warehouse & Building" => "bg-warning text-dark", // เหลือง
+                                            "Other" => "bg-secondary",                      // เทา
+                                            _ => "bg-info"                                  // ฟ้า (default)
+                                        };
+                                    }
+                                    <span class="badge @categoryBadgeClass">@item.Category</span>
+                                </td>
+
+                                <td>
+                                    @if (item.StartDate.HasValue)
+                                    {
+                                        <small>@item.StartDate.Value.ToString("dd/MM/yyyy")</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">-</small>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.Department))
+                                    {
+                                        <small>@item.Department.Substring(0,3) - @item.Division</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">-</small>
+                                    }
+                                </td>
+                                <td>
+                                    <strong>@item.Item</strong>
+                                    @if (!string.IsNullOrEmpty(item.Urgent))
+                                    {
+                                        var urgentBadge = item.Urgent switch
+                                        {
+                                            "1.ด่วนมาก" => "bg-danger",              // น้ำเงิน
+                                            "2.ด่วน" => "bg-warning text-dark",
+                                            "3.ปกติ" => "bg-info d-none",
+                                            _ => "bg-secondary"
+                                        };
+                                        <span class="badge @urgentBadge">@item.Urgent</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        <br><small class="text-muted">@item.Description</small>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <strong>฿@item.Amount.ToString("N0")</strong>
+                                </td>
+                                <td class="text-end">
+                                    @if (item.ApprovedAmount > 0)
+                                    {
+                                        <strong class="text-success">฿@item.ApprovedAmount.ToString("N0")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Status == "approved")
+                                    {
+                                        <span class="badge badge-approved">
+                                            <i class="fas fa-check me-1"></i>อนุมัติ
+                                        </span>
+                                    }
+                                    else if (item.Status == "rejected")
+                                    {
+                                        <span class="badge badge-rejected">
+                                            <i class="fas fa-times me-1"></i>ไม่อนุมัติ
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-proposed">
+                                            <i class="fas fa-clock me-1"></i>รอพิจารณา
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-controller="Budget" asp-action="Details" asp-route-id="@item.Id" 
+                                           class="btn btn-info" title="ดูรายละเอียด">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a asp-controller="Budget" asp-action="Edit" asp-route-id="@item.Id" 
+                                           class="btn btn-warning" title="แก้ไข">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-controller="Voting" asp-action="Create" asp-route-budgetItemId="@item.Id"
+                                           class="btn btn-success" title="สร้างการลงคะแนน">
+                                            <i class="fas fa-vote-yea"></i>
+                                        </a>
+                                        <button onclick="confirmDelete(@item.Id, '@item.Item')" 
+                                                class="btn btn-danger" title="ลบ">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                <small class="text-muted">
+                    แสดง <strong id="displayCount">@Model.BudgetItems.Count</strong> จาก <strong>@Model.BudgetItems.Count</strong> รายการ
+                </small>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>ยืนยันการลบ
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>คุณต้องการลบรายการ <strong id="deleteItemName"></strong> ใช่หรือไม่?</p>
+                <p class="text-danger mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    การดำเนินการนี้ไม่สามารถย้อนกลับได้
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>ลบรายการ
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let departmentsData = [];
+
+    // Load departments for filter
+    async function loadDepartments() {
+        try {
+            const response = await fetch('/api/Department/departments');
+            departmentsData = await response.json();
+            
+            const select = document.getElementById('departmentFilter');
+            departmentsData.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept.name;
+                option.textContent = dept.name;
+                option.setAttribute('data-id', dept.id);
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading departments:', error);
+        }
+    }
+
+    // Load divisions for filter
+    async function loadDivisionsFilter(departmentName) {
+        const divisionSelect = document.getElementById('divisionFilter');
+        
+        // Clear divisions
+        divisionSelect.innerHTML = '<option value="">ทุกฝ่าย</option>';
+        divisionSelect.disabled = true;
+        
+        if (!departmentName) return;
+        
+        try {
+            const dept = departmentsData.find(d => d.name === departmentName);
+            if (!dept) return;
+            
+            const response = await fetch(`/api/Department/divisions/${dept.id}`);
+            const divisions = await response.json();
+            
+            divisions.forEach(div => {
+                const option = document.createElement('option');
+                option.value = div.name;
+                option.textContent = div.name;
+                divisionSelect.appendChild(option);
+            });
+            
+            divisionSelect.disabled = false;
+        } catch (error) {
+            console.error('Error loading divisions:', error);
+        }
+    }
+    // Department Chart
+    const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+    const departmentData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.DepartmentBudgets.Select(d => new { 
+            label = d.Department, 
+            value = d.TotalAmount 
+        })
+    ));
+
+    new Chart(departmentCtx, {
+        type: 'bar',
+        data: {
+            labels: departmentData.map(d => d.label),
+            datasets: [{
+                label: 'งบประมาณ (บาท)',
+                data: departmentData.map(d => d.value),
+                backgroundColor: [
+                    'rgba(255, 107, 53, 0.8)',
+                    'rgba(78, 205, 196, 0.8)',
+                    'rgba(149, 225, 211, 0.8)',
+                    'rgba(255, 217, 61, 0.8)',
+                    'rgba(243, 129, 129, 0.8)'
+                ],
+                borderWidth: 0,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '฿' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Category Chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    const categoryData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.CategoryBudgets.Select(c => new { 
+            label = c.Category, 
+            value = c.TotalAmount 
+        })
+    ));
+
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryData.map(c => c.label),
+            datasets: [{
+                data: categoryData.map(c => c.value),
+                backgroundColor: [
+                    'rgba(255, 107, 53, 0.8)',
+                    'rgba(78, 205, 196, 0.8)',
+                    'rgba(149, 225, 211, 0.8)',
+                    'rgba(255, 217, 61, 0.8)'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ฿' + context.parsed.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Search and Filter
+    // Filter table
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const departmentFilter = document.getElementById('departmentFilter');
+    const divisionFilter = document.getElementById('divisionFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const table = document.getElementById('budgetTable');
+    const tbody = table?.querySelector('tbody');
+    const projectTypeFilter = document.getElementById('projectTypeFilter');
+    const urgentFilter = document.getElementById('urgentFilter');
+
+    function filterTable() {
+        if (!tbody) return;
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const category = categoryFilter.value;
+        const department = departmentFilter.value;
+        const division = divisionFilter.value;
+        const status = statusFilter.value;
+        const projectType = projectTypeFilter.value;
+        const urgent = urgentFilter.value;
+        const rows = tbody.querySelectorAll('tr');
+        let visibleCount = 0;
+        console.log(urgent);
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowCategory = row.dataset.category;
+            const rowDepartment = row.dataset.department;
+            const rowDivision = row.dataset.division;
+            const rowStatus = row.dataset.status;
+            const rowProjectType = row.dataset.projecttype;
+            const rowUrgent = row.dataset.urgent;
+
+            const matchesSearch = text.includes(searchTerm);
+            const matchesCategory = !category || rowCategory === category;
+            const matchesDepartment = !department || rowDepartment === department;
+            const matchesDivision = !division || rowDivision === division;
+            const matchesStatus = !status || rowStatus === status;
+            const matchesProjectType = !projectType || rowProjectType === projectType;
+            const matchesUrgent = !urgent || rowUrgent === urgent;
+            console.log(matchesUrgent);
+            if (matchesSearch && matchesCategory && matchesDepartment && matchesDivision && matchesProjectType && matchesUrgent && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        document.getElementById('displayCount').textContent = visibleCount;
+    }
+
+    // Event listeners
+    searchInput?.addEventListener('input', filterTable);
+    categoryFilter?.addEventListener('change', filterTable);
+    statusFilter?.addEventListener('change', filterTable);
+    projectTypeFilter?.addEventListener('change', filterTable);
+    urgentFilter?.addEventListener('change', filterTable);
+    
+    departmentFilter?.addEventListener('change', async function() {
+        const departmentName = this.value;
+        if (departmentName) {
+            await loadDivisionsFilter(departmentName);
+        } else {
+            document.getElementById('divisionFilter').innerHTML = '<option value="">ทุกฝ่าย</option>';
+            document.getElementById('divisionFilter').disabled = true;
+        }
+        filterTable();
+    });
+    
+    divisionFilter?.addEventListener('change', filterTable);
+
+    function resetFilters() {
+        searchInput.value = '';
+        categoryFilter.value = '';
+        departmentFilter.value = '';
+        divisionFilter.value = '';
+        divisionFilter.innerHTML = '<option value="">ทุกฝ่าย</option>';
+        divisionFilter.disabled = true;
+        statusFilter.value = '';
+        projectTypeFilter.value = '';
+        urgentFilter.value = ''
+        filterTable();
+    }
+
+    // Delete Confirmation
+    let deleteModal;
+    function confirmDelete(id, name) {
+        document.getElementById('deleteItemName').textContent = name;
+        document.getElementById('deleteForm').action = '/Budget/Delete/' + id;
+        
+        if (!deleteModal) {
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        }
+        deleteModal.show();
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDepartments();
+    });
+</script>
+}

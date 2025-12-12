@@ -1,0 +1,136 @@
+@model VotingSession
+@{
+    ViewData["Title"] = "สร้างการลงคะแนน";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-vote-yea me-2"></i>
+                    สร้างการลงคะแนนใหม่
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreatePost" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <!-- Budget Item ID (Hidden) -->
+                    <input type="hidden" name="BudgetItemId" value="@Model.BudgetItemId" />
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label for="Title" class="form-label">
+                            <i class="fas fa-heading me-1"></i>หัวข้อการลงคะแนน <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="Title" id="Title" class="form-control"
+                               value="@Model.Title" placeholder="เช่น: ขออนุมัติงบประมาณซื้อเครื่องคอมพิวเตอร์" required>
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label for="Description" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>รายละเอียด
+                        </label>
+                        <textarea name="Description" id="Description" class="form-control" rows="4"
+                                  placeholder="อธิบายรายละเอียดเพิ่มเติมเกี่ยวกับรายการงบประมาณนี้...">@Model.Description</textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="mb-3">
+                        <label for="Amount" class="form-label">
+                            <i class="fas fa-money-bill-wave me-1"></i>งบประมาณที่ขออนุมัติ (บาท) <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" name="Amount" id="Amount" class="form-control"
+                               value="@Model.Amount" placeholder="0.00" step="0.01" min="0" required>
+                        <span asp-validation-for="Amount" class="text-danger"></span>
+                    </div>
+
+                    <!-- Voters -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-users me-1"></i>ผู้มีสิทธิ์ลงคะแนน <span class="text-danger">*</span>
+                        </label>
+                        <div id="votersContainer">
+                            <div class="voter-item mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    <input type="text" name="Voters" class="form-control"
+                                           placeholder="ชื่อ-นามสกุล หรือ อีเมล" required>
+                                    <button type="button" class="btn btn-danger" onclick="removeVoter(this)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-success" onclick="addVoter()">
+                            <i class="fas fa-plus me-1"></i>เพิ่มผู้ลงคะแนน
+                        </button>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            เพิ่มรายชื่อผู้มีสิทธิ์ลงคะแนนอย่างน้อย 1 คน
+                        </small>
+                    </div>
+
+                    <!-- Info Box -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>หมายเหตุ:</strong> หลังจากสร้างการลงคะแนนแล้ว คุณจะได้รับลิงก์สำหรับแชร์ให้ผู้ลงคะแนน
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a asp-controller="Budget" asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>ยกเลิก
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check me-2"></i>สร้างการลงคะแนน
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        function addVoter() {
+            const container = document.getElementById('votersContainer');
+            const newVoter = `
+                <div class="voter-item mb-2">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <input type="text" name="Voters" class="form-control"
+                               placeholder="ชื่อ-นามสกุล หรือ อีเมล" required>
+                        <button type="button" class="btn btn-danger" onclick="removeVoter(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', newVoter);
+        }
+
+        function removeVoter(button) {
+            const voterItems = document.querySelectorAll('.voter-item');
+            if (voterItems.length > 1) {
+                button.closest('.voter-item').remove();
+            } else {
+                alert('ต้องมีผู้ลงคะแนนอย่างน้อย 1 คน');
+            }
+        }
+    </script>
+}

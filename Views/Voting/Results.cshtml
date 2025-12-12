@@ -1,0 +1,294 @@
+@model VotingResultsViewModel
+@{
+    ViewData["Title"] = "ผลคะแนน";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Header -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        ผลการลงคะแนน
+                    </h4>
+                    <div>
+                        @if (Model.Session.IsClosed)
+                        {
+                            <span class="badge bg-danger fs-6">
+                                <i class="fas fa-lock me-1"></i>ปิดแล้ว
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-lock-open me-1"></i>เปิดรับคะแนน
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <h5>@Model.Session.Title</h5>
+                @if (!string.IsNullOrEmpty(Model.Session.Description))
+                {
+                    <p class="text-muted">@Model.Session.Description</p>
+                }
+                <p class="mb-0">
+                    <strong>งบประมาณที่ขออนุมัติ:</strong>
+                    <span class="text-primary fs-5">฿@Model.Session.Amount.ToString("N2")</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Total Votes -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-users"></i> จำนวนผู้ลงคะแนน
+                        </h6>
+                        <h2 class="mb-0">@Model.TotalVotes / @Model.Session.VotersList.Count</h2>
+                        <small class="text-muted">
+                            @{
+                                var votePercentage = Model.Session.VotersList.Count > 0
+                                ? (Model.TotalVotes * 100.0 / Model.Session.VotersList.Count).ToString("F1")
+                                : "0";
+                            }
+                            @votePercentage% ของผู้มีสิทธิ์
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approved Count -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-check-circle text-success"></i> อนุมัติ
+                        </h6>
+                        <h2 class="mb-0 text-success">@Model.ApprovedCount</h2>
+                        <small class="text-muted">
+                            @{
+                                var approvedPercentage = Model.TotalVotes > 0
+                                ? (Model.ApprovedCount * 100.0 / Model.TotalVotes).ToString("F1")
+                                : "0";
+                            }
+                            @approvedPercentage% ของผู้ลงคะแนน
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rejected Count -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-times-circle text-danger"></i> ไม่อนุมัติ
+                        </h6>
+                        <h2 class="mb-0 text-danger">@Model.RejectedCount</h2>
+                        <small class="text-muted">
+                            @{
+                                var rejectedPercentage = Model.TotalVotes > 0
+                                ? (Model.RejectedCount * 100.0 / Model.TotalVotes).ToString("F1")
+                                : "0";
+                            }
+                            @rejectedPercentage% ของผู้ลงคะแนน
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <canvas id="voteChart" height="100"></canvas>
+            </div>
+        </div>
+
+        <!-- Votes Detail -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    รายละเอียดคะแนน
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Votes.Count == 0)
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">ยังไม่มีผู้ลงคะแนน</h5>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ผู้ลงคะแนน</th>
+                                    <th>คะแนน</th>
+                                    <th class="text-end">งบที่เสนอ</th>
+                                    <th>ความคิดเห็น</th>
+                                    <th>เวลา</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var vote in Model.Votes.OrderByDescending(v => v.VotedAt))
+                                {
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-user-circle text-primary me-2"></i>
+                                            <strong>@vote.VoterName</strong>
+                                            @if (!string.IsNullOrEmpty(vote.VoterEmail))
+                                            {
+                                                <br>
+                                    
+                                                <small class="text-muted">@vote.VoterEmail</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (vote.VoteChoice == "approved")
+                                            {
+                                                <span class="badge badge-approved">
+                                                    <i class="fas fa-check me-1"></i>อนุมัติ
+                                                </span>
+                                            }
+                                            else if (vote.VoteChoice == "partial")
+                                            {
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-adjust me-1"></i>บางส่วน
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-rejected">
+                                                    <i class="fas fa-times me-1"></i>ไม่อนุมัติ
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @if (vote.SuggestedAmount.HasValue && vote.SuggestedAmount > 0)
+                                            {
+                                                <strong>฿@vote.SuggestedAmount.Value.ToString("N2")</strong>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(vote.Comment))
+                                            {
+                                                <small>@vote.Comment</small>
+                                            }
+                                            else
+                                            {
+                                                <small class="text-muted">-</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            <small>@vote.VotedAt.ToString("dd/MM/yy HH:mm")</small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.AverageSuggestedAmount > 0)
+                    {
+                        <div class="alert alert-info mt-3">
+                            <strong>งบประมาณเฉลี่ยที่เสนอ:</strong>
+                            ฿@Model.AverageSuggestedAmount.ToString("N2")
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex gap-2 justify-content-between align-items-center">
+                    <div>
+                        @if (!Model.Session.IsClosed)
+                        {
+                            <form asp-action="ClosePost" method="post" style="display: inline;">
+                                <input type="hidden" name="voteId" value="@Model.Session.VoteId" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-danger"
+                                        onclick="return confirm('คุณต้องการปิดการลงคะแนนนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้')">
+                                    <i class="fas fa-lock me-2"></i>ปิดการลงคะแนน
+                                </button>
+                            </form>
+                        }
+                    </div>
+                    <div>
+                        <a asp-action="Share" asp-route-voteId="@Model.Session.VoteId" class="btn btn-success">
+                            <i class="fas fa-share me-2"></i>แชร์ลิงก์
+                        </a>
+                        <a asp-controller="Budget" asp-action="Index" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-2"></i>กลับหน้าหลัก
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const ctx = document.getElementById('voteChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['อนุมัติเต็มจำนวน', 'อนุมัติบางส่วน', 'ไม่อนุมัติ'],
+                datasets: [{
+                    label: 'จำนวนคะแนน',
+                    data: [@Model.ApprovedCount, @Model.PartialCount, @Model.RejectedCount],
+                    backgroundColor: [
+                        'rgba(149, 225, 211, 0.8)',
+                        'rgba(255, 217, 61, 0.8)',
+                        'rgba(243, 129, 129, 0.8)'
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = @Model.TotalVotes;
+                                const value = context.parsed.y;
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return value + ' คะแนน (' + percentage + '%)';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

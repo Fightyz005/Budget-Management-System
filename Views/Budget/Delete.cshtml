@@ -1,0 +1,71 @@
+@model BudgetItem
+@{
+    ViewData["Title"] = "ยืนยันการลบ";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ยืนยันการลบรายการงบประมาณ
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>คำเตือน:</strong> การลบรายการนี้จะไม่สามารถย้อนกลับได้!
+                </div>
+
+                <h5 class="mb-3">คุณต้องการลบรายการนี้ใช่หรือไม่?</h5>
+
+                <dl class="row">
+                    <dt class="col-sm-4">รหัส:</dt>
+                    <dd class="col-sm-8">#@Model.Id</dd>
+
+                    <dt class="col-sm-4">ชื่อรายการ:</dt>
+                    <dd class="col-sm-8"><strong>@Model.Item</strong></dd>
+
+                    <dt class="col-sm-4">หมวดหมู่:</dt>
+                    <dd class="col-sm-8">@Model.Category</dd>
+
+                    <dt class="col-sm-4">งบประมาณ:</dt>
+                    <dd class="col-sm-8">฿@Model.Amount.ToString("N0")</dd>
+
+                    <dt class="col-sm-4">สถานะ:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Status == "approved")
+                        {
+                            <span class="badge badge-approved">อนุมัติ</span>
+                        }
+                        else if (Model.Status == "rejected")
+                        {
+                            <span class="badge badge-rejected">ไม่อนุมัติ</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-proposed">รอพิจารณา</span>
+                        }
+                    </dd>
+                </dl>
+
+                <hr>
+
+                <form asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>ยกเลิก
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-2"></i>ยืนยันการลบ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
